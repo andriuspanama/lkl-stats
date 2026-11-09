@@ -5,12 +5,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          set +e
           curl -sL -A "Mozilla/5.0" https://lkl.lt/rungtynes/11621 -o page.html
-          echo "== SCRIPTS =="
-          grep -oE 'src="[^"]+\.js[^"]*"' page.html
-          echo "== ENDPOINT HINTS =="
-          grep -oiE '(https?:)?/[a-z0-9_/.-]*(api|ajax|json|stat|protocol|shot|play|boxscore)[a-z0-9_/.?=&-]*' page.html | sort -u
-          for p in protokolas eiga metimai statistika lyderiai; do
-            echo "== /rungtynes/11621/$p =="
+          echo "== SIZE =="
+          wc -c page.html
+          echo "== SCRIPT TAGS =="
+          grep -oiE '<script[^>]*>' page.html | head -50
+          echo "== URL HINTS =="
+          grep -oiE '(https?:)?//?[a-zA-Z0-9_./-]*(api|ajax|json|stat|protocol|shot|play|boxscore|livewire|match|game)[a-zA-Z0-9_./?=&-]*' page.html | sort -u | head -80
+          echo "== INLINE JS =="
+          sed -n '/<script>/,/<\/script>/p' page.html | head -c 3000
+          for p in protokolas eiga metimai statistika; do
+            echo "== $p =="
             curl -sL -A "Mozilla/5.0" -o /dev/null -w "%{http_code} %{size_download}\n" https://lkl.lt/rungtynes/11621/$p
           done
